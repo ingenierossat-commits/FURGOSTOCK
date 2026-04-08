@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FURGOSTOCK</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5b2d6e">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f8f8f6;--white:#fff;--black:#1a1a1a;--ber:#5b2d6e;--berl:#7a3d91;--berp:#f0e8f4;--blu:#1e5fa8;--blul:#2e7dd4;--blup:#e8f0fa;--grn:#2d7a4a;--grnl:#38a05f;--grnp:#e8f5ee;--red:#c0392b;--redp:#fdecea;--gray:#888;--grayl:#e8e8e6;--brd:#ddd;--sh:0 2px 12px rgba(0,0,0,.10);--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--black);min-height:100vh;max-width:480px;margin:0 auto}
+
+/* ---- CONNECT SCREEN ---- */
+#connect-screen{position:fixed;inset:0;background:var(--ber);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s}
+#connect-screen.hide{opacity:0;pointer-events:none}
+#connect-screen img{width:160px;height:160px;border-radius:28px;box-shadow:0 8px 32px rgba(0,0,0,.3);margin-bottom:24px}
+#connect-screen .app-name{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;color:white;letter-spacing:2px;margin-bottom:4px}
+#connect-screen .app-name span{color:rgba(255,255,255,.5)}
+#connect-screen .app-sub{font-size:13px;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:48px}
+#btn-connect{background:white;color:var(--ber);border:none;border-radius:50px;padding:16px 48px;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.25);transition:transform .15s,box-shadow .15s}
+#btn-connect:active{transform:scale(.96);box-shadow:0 2px 10px rgba(0,0,0,.2)}
+#btn-connect.loading{opacity:.6;pointer-events:none}
+#connect-status{margin-top:20px;font-size:13px;color:rgba(255,255,255,.6);min-height:20px;letter-spacing:.5px}
+
+/* ---- SPLASH (post-connect) ---- */
+#splash{position:fixed;inset:0;background:var(--ber);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .4s;opacity:0;pointer-events:none}
+#splash.show{opacity:1;pointer-events:all}
+#splash.hide{opacity:0;pointer-events:none}
+#splash img{width:160px;height:160px;border-radius:28px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+#splash .stxt{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.5);margin-top:20px;letter-spacing:2px;text-transform:uppercase}
+
+/* ---- APP ---- */
+#app{display:none}
+.header{background:var(--white);border-bottom:3px solid var(--ber);padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:var(--sh)}
+.header-inner{display:flex;align-items:center;height:60px;gap:12px}
+.app-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;letter-spacing:1px;color:var(--ber)}
+.app-title span{color:var(--blu)}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:4px}
+.hdr-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--blu);padding:6px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--grn);flex-shrink:0;box-shadow:0 0 0 2px var(--grnp)}
+.sync-dot.saving{background:#f39c12;box-shadow:0 0 0 2px #fef9ee;animation:pulse-dot .6s infinite alternate}
+.sync-dot.error{background:var(--red);box-shadow:0 0 0 2px var(--redp)}
+@keyframes pulse-dot{from{opacity:1}to{opacity:.3}}
+.bc{display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:13px;color:var(--gray);background:var(--white);border-bottom:1px solid var(--grayl);overflow-x:auto;white-space:nowrap}
+.bci{cursor:pointer;color:var(--blu);font-weight:600}
+.bci:last-child{color:var(--black);cursor:default;font-weight:500}
+.bcs{color:var(--brd)}
+.content{padding:16px}
+.lvl-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.lvl-ttl{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray)}
+.card-list{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-left:4px solid transparent}
+.card.loc{border-left-color:var(--ber)}
+.card.cat{border-left-color:var(--blu)}
+.card.prt{border-left-color:var(--grn)}
+.card-body{display:flex;align-items:center;padding:14px 12px;gap:12px;cursor:pointer}
+.card-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.card.loc .card-ico{background:var(--berp)}
+.card.cat .card-ico{background:var(--blup)}
+.card.prt .card-ico{background:var(--grnp)}
+.card-info{flex:1;min-width:0}
+.card-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--black)}
+.card-meta{font-size:12px;color:var(--gray);margin-top:2px}
+.typ-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0}
+.typ-badge.subs{background:var(--blup);color:var(--blu)}
+.typ-badge.direct{background:var(--grnp);color:var(--grn)}
+.stk-badge{background:var(--grnp);color:var(--grn);border:1.5px solid var(--grnl);border-radius:8px;padding:4px 10px;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;min-width:40px;text-align:center;flex-shrink:0}
+.stk-badge.zero{background:var(--redp);color:var(--red);border-color:var(--red)}
+.card-acts{display:flex;border-top:1px solid var(--grayl)}
+.card-act{flex:1;padding:9px;border:none;background:transparent;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.card-act:not(:last-child){border-right:1px solid var(--grayl)}
+.card-act.edit{color:var(--blu)}.card-act.edit:active{background:var(--blup)}
+.card-act.del{color:var(--red)}.card-act.del:active{background:var(--redp)}
+.stk-ctrl{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--grnp);border-top:1px solid #c8e8d4}
+.stk-btn{width:36px;height:36px;border-radius:50%;border:2px solid var(--grnl);background:var(--white);color:var(--grn);font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stk-btn.minus{border-color:var(--red);color:var(--red)}
+.fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--ber);color:white;border:none;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(91,45,110,.5);display:flex;align-items:center;justify-content:center;transition:transform .15s;z-index:50}
+.fab:active{transform:scale(.93)}
+.fab.blue{background:var(--blu);box-shadow:0 4px 16px rgba(30,95,168,.5)}
+.fab.green{background:var(--grn);box-shadow:0 4px 16px rgba(45,122,74,.5)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
+.mo.open{opacity:1;pointer-events:all}
+.modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;padding:24px 20px 36px;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.1,.64,1);max-height:90vh;overflow-y:auto}
+.mo.open .modal{transform:translateY(0)}
+.mhdl{width:40px;height:4px;background:var(--brd);border-radius:2px;margin:0 auto 20px}
+.mttl{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--black);margin-bottom:18px;text-transform:uppercase;letter-spacing:.5px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.fi{text-transform:uppercase;width:100%;border:1.5px solid var(--brd);border-radius:var(--rs);padding:11px 14px;font-family:'Barlow',sans-serif;font-size:15px;color:var(--black);background:var(--bg);outline:none}
+.fi:focus{border-color:var(--ber)}
+.fr{display:flex;gap:10px}.fr .fg{flex:1}
+.tgl-row{display:flex;align-items:center;gap:12px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;cursor:pointer}
+.tgl-row.on{border-color:var(--ber);background:var(--berp)}
+.tgl-sw{width:44px;height:24px;border-radius:12px;background:var(--brd);position:relative;flex-shrink:0;transition:background .2s}
+.tgl-sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.tgl-row.on .tgl-sw{background:var(--ber)}
+.tgl-row.on .tgl-sw::after{transform:translateX(20px)}
+.tgl-lbl{font-size:14px;font-weight:600;color:var(--black)}
+.tgl-sub{font-size:12px;color:var(--gray);margin-top:2px}
+.btn{width:100%;padding:14px;border:none;border-radius:var(--rs);background:var(--ber);color:white;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-top:6px}
+.btn:active{opacity:.85}
+.btn.blue{background:var(--blu)}.btn.green{background:var(--grn)}
+.mic-btn{width:48px;height:48px;border-radius:50%;border:2px solid var(--ber);background:var(--white);color:var(--ber);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mic-btn.on{background:var(--ber);color:white;animation:pulso .8s infinite alternate}
+@keyframes pulso{from{box-shadow:0 0 0 0 rgba(91,45,110,.4)}to{box-shadow:0 0 0 10px rgba(91,45,110,0)}}
+.src-row{display:flex;align-items:flex-end;gap:10px}
+.src-row .fg{flex:1;margin-bottom:0}
+.sr{background:var(--blup);border:1.5px solid var(--blul);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;font-size:14px;color:var(--blu);cursor:pointer}
+.sr strong{color:var(--black);display:block;font-size:16px;margin-bottom:4px}
+.sr.nf{background:var(--redp);border-color:var(--red);color:var(--red);cursor:default}
+.btn-ok{width:100%;padding:12px;border:none;border-radius:var(--rs);background:var(--ber);color:white;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-top:14px}
+.btn-ok:active{opacity:.85}
+.empty{text-align:center;padding:48px 24px;color:var(--gray)}
+.empty p{font-size:14px;line-height:1.5}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--black);color:white;padding:10px 20px;border-radius:50px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;z-index:300;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.cov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.cov.open{opacity:1;pointer-events:all}
+.cbox{background:var(--white);border-radius:var(--r);padding:24px 20px;width:100%;max-width:320px;text-align:center;transform:scale(.9);transition:transform .2s}
+.cov.open .cbox{transform:scale(1)}
+.cbox h3{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px}
+.cbox p{font-size:14px;color:var(--gray);margin-bottom:20px;line-height:1.4}
+.cbtns{display:flex;gap:10px}
+.cbtn{flex:1;padding:12px;border:none;border-radius:var(--rs);font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
+.cbtn.cancel{background:var(--grayl);color:var(--black)}
+.cbtn.danger{background:var(--red);color:white}
+</style>
+</head>
+<body>
+
+<!-- CONNECT SCREEN -->
+<div id="connect-screen">
+  <img src="icon-512.png" alt="FURGOSTOCK">
+  <div class="app-name">FURGO<span>STOCK</span></div>
+  <div class="app-sub">Inventario de furgoneta</div>
+  <button id="btn-connect" onclick="conectar()">🔗 CONECTAR</button>
+  <div id="connect-status"></div>
+</div>
+
+<!-- SPLASH POST-CONNECT -->
+<div id="splash">
+  <img src="icon-512.png" alt="FURGOSTOCK">
+  <div class="stxt">Cargando datos...</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-inner">
+      <div class="app-title">FURGO<span>STOCK</span></div>
+      <div class="header-actions">
+        <div class="sync-dot" id="sync-dot" title="Estado de sincronización"></div>
+        <button class="hdr-btn" onclick="showSearch()">🔍</button>
+      </div>
+    </div>
+  </div>
+  <div class="bc" id="bc"></div>
+  <div class="content" id="main"></div>
+  <button class="fab" id="fab" onclick="openAdd()">＋</button>
+</div>
+
+<!-- MODAL EDICIÓN -->
+<div class="mo" id="mo" onclick="closeMo(event)">
+  <div class="modal">
+    <div class="mhdl"></div>
+    <div class="mttl" id="mttl"></div>
+    <div id="mform"></div>
+  </div>
+</div>
+
+<!-- MODAL BÚSQUEDA -->
+<div class="mo" id="so" onclick="closeSo(event)">
+  <div class="modal">
+    <div class="mhdl"></div>
+    <div class="mttl">🔍 Buscar Repuesto</div>
+    <div class="src-row">
+      <div class="fg">
+        <label class="fl">Nombre del repuesto</label>
+        <input class="fi" id="si" placeholder="ej: rueda, motor DORMA..." oninput="doSearch()" autocomplete="off">
+      </div>
+      <button class="mic-btn" id="micbtn" onclick="toggleVoice()">🎙</button>
+    </div>
+    <div id="sres" style="margin-top:12px;max-height:50vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="cov" id="cov">
+  <div class="cbox">
+    <h3 id="ctit">¿Eliminar?</h3>
+    <p id="cmsg"></p>
+    <div class="cbtns">
+      <button class="cbtn cancel" onclick="closeCov()">Cancelar</button>
+      <button class="cbtn danger" onclick="doDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, off } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ---- CONFIG FIREBASE ----
+const firebaseConfig = {
+  apiKey: "AIzaSyChMXx5ZcleAo5oqzPvo1K_Af_wgQkh-LQ",
+  authDomain: "listify-16b5d.firebaseapp.com",
+  databaseURL: "https://listify-16b5d-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "listify-16b5d",
+  storageBucket: "listify-16b5d.firebasestorage.app",
+  messagingSenderId: "238610923350",
+  appId: "1:238610923350:web:cd5c2c3fb23b5c0afba0f7"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const DB_PATH = 'furgostock/data';
+
+// ---- ESTADO ----
+let db = { locations: [] };
+let nav = { locId: null, catId: null };
+let mmode = null, medit = null, delCb = null, subsOn = false;
+let recog = null;
+let saveTimeout = null;
+let dbRef = null;
+let connected = false;
+
+// ---- FIREBASE ----
+window.conectar = function() {
+  const btn = document.getElementById('btn-connect');
+  const status = document.getElementById('connect-status');
+  btn.classList.add('loading');
+  btn.textContent = '⏳ Conectando...';
+  status.textContent = 'Accediendo a Firebase...';
+
+  try {
+    dbRef = ref(database, DB_PATH);
+    onValue(dbRef, (snapshot) => {
+      if (!connected) {
+        // Primera carga: mostrar splash y luego app
+        connected = true;
+        const data = snapshot.val();
+        db = data ? data : { locations: [] };
+
+        document.getElementById('connect-screen').classList.add('hide');
+        const splash = document.getElementById('splash');
+        splash.classList.add('show');
+        setTimeout(() => {
+          splash.classList.add('hide');
+          splash.classList.remove('show');
+          document.getElementById('app').style.display = 'block';
+          render();
+        }, 1200);
+      } else {
+        // Actualizaciones en tiempo real (otro dispositivo)
+        const data = snapshot.val();
+        if (data) {
+          db = data;
+          render();
+        }
+      }
+      setSyncDot('ok');
+    }, (error) => {
+      status.textContent = '❌ Error de conexión. Reintenta.';
+      btn.classList.remove('loading');
+      btn.textContent = '🔗 CONECTAR';
+      setSyncDot('error');
+    });
+  } catch(e) {
+    status.textContent = '❌ Error. Revisa la configuración.';
+    btn.classList.remove('loading');
+    btn.textContent = '🔗 CONECTAR';
+  }
+};
+
+function save() {
+  setSyncDot('saving');
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    if (!dbRef) return;
+    set(dbRef, db)
+      .then(() => setSyncDot('ok'))
+      .catch(() => { setSyncDot('error'); toast('⚠️ Error al guardar'); });
+  }, 400); // debounce 400ms para cambios de stock rápidos
+}
+
+function setSyncDot(state) {
+  const dot = document.getElementById('sync-dot');
+  if (!dot) return;
+  dot.className = 'sync-dot' + (state !== 'ok' ? ' ' + state : '');
+}
+
+// ---- UTILIDADES ----
+const gid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const getLoc = id => db.locations.find(l => l.id === id);
+const getCat = (loc, id) => loc && (loc.categories || []).find(c => c.id === id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const toast = msg => {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+};
+
+function getParts() {
+  const loc = getLoc(nav.locId); if (!loc) return null;
+  if (loc.hasSubs) { const cat = getCat(loc, nav.catId); return cat ? cat.parts : null; }
+  if (!loc.parts) loc.parts = [];
+  return loc.parts;
+}
+
+// ---- RENDER ----
+function render() { renderBC(); renderMain(); updateFab(); }
+
+function renderBC() {
+  const bc = document.getElementById('bc');
+  let h = `<span class="bci" onclick="goHome()">🏠 Inicio</span>`;
+  if (nav.locId) {
+    const loc = getLoc(nav.locId);
+    if (loc) {
+      if (loc.hasSubs && nav.catId) {
+        h += `<span class="bcs">›</span><span class="bci" onclick="goLoc('${loc.id}')">${esc(loc.name)}</span>`;
+        const cat = getCat(loc, nav.catId);
+        if (cat) h += `<span class="bcs">›</span><span class="bci">${esc(cat.name)}</span>`;
+      } else {
+        h += `<span class="bcs">›</span><span class="bci">${esc(loc.name)}</span>`;
+      }
+    }
+  }
+  bc.innerHTML = h;
+}
+
+function renderMain() {
+  const el = document.getElementById('main');
+  if (!nav.locId) { renderLocs(el); return; }
+  const loc = getLoc(nav.locId);
+  if (!loc) { goHome(); return; }
+  if (loc.hasSubs && !nav.catId) renderCats(el, loc);
+  else renderParts(el, loc);
+}
+
+function renderLocs(el) {
+  let h = `<div class="lvl-hdr"><div class="lvl-ttl">📦 Ubicaciones</div></div>`;
+  if (!db.locations.length) {
+    h += `<div class="empty"><div style="margin-bottom:16px;">
+      <svg width="80" height="96" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="0" width="72" height="88" rx="8" fill="#f0e8f4" stroke="#5b2d6e" stroke-width="2.5"/>
+        <rect x="11" y="9" width="58" height="13" rx="3" fill="white" stroke="#5b2d6e" stroke-width="1.5"/>
+        <rect x="11" y="26" width="58" height="13" rx="3" fill="white" stroke="#5b2d6e" stroke-width="1.5"/>
+        <rect x="11" y="43" width="58" height="13" rx="3" fill="white" stroke="#5b2d6e" stroke-width="1.5"/>
+        <rect x="11" y="60" width="58" height="13" rx="3" fill="white" stroke="#5b2d6e" stroke-width="1.5"/>
+        <rect x="32" y="12" width="16" height="5" rx="2.5" fill="#5b2d6e"/>
+        <rect x="32" y="29" width="16" height="5" rx="2.5" fill="#5b2d6e"/>
+        <rect x="32" y="46" width="16" height="5" rx="2.5" fill="#5b2d6e"/>
+        <rect x="32" y="63" width="16" height="5" rx="2.5" fill="#5b2d6e"/>
+        <rect x="14" y="85" width="10" height="6" rx="2" fill="#5b2d6e"/>
+        <rect x="56" y="85" width="10" height="6" rx="2" fill="#5b2d6e"/>
+      </svg>
+    </div><p>Sin ubicaciones todavía.<br>Pulsa <strong>＋</strong> para añadir la primera.</p></div>`;
+  } else {
+    h += `<div class="card-list">`;
+    db.locations.forEach(loc => {
+      let meta, badge;
+      if (loc.hasSubs) {
+        const nc = (loc.categories || []).length;
+        const np = (loc.categories || []).reduce((a, c) => a + c.parts.length, 0);
+        meta = `${nc} subcategoría${nc !== 1 ? 's' : ''} · ${np} repuesto${np !== 1 ? 's' : ''}`;
+        badge = `<span class="typ-badge subs">Con cajones</span>`;
+      } else {
+        const np = (loc.parts || []).length;
+        meta = `${np} repuesto${np !== 1 ? 's' : ''}`;
+        badge = `<span class="typ-badge direct">Directo</span>`;
+      }
+      h += `<div class="card loc">
+        <div class="card-body" onclick="goLoc('${loc.id}')">
+          <div class="card-ico">📦</div>
+          <div class="card-info"><div class="card-name">${esc(loc.name)}</div><div class="card-meta">${meta}</div></div>
+          ${badge}<span style="color:var(--gray);font-size:20px;margin-left:6px;">›</span>
+        </div>
+        <div class="card-acts">
+          <button class="card-act edit" onclick="editLoc('${loc.id}')">✏️ Editar</button>
+          <button class="card-act del" onclick="askDel('ubicación','${esc(loc.name)}',()=>delLoc('${loc.id}'))">🗑 Eliminar</button>
+        </div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+  el.innerHTML = h;
+}
+
+function renderCats(el, loc) {
+  let h = `<div class="lvl-hdr"><div class="lvl-ttl">🗂 ${esc(loc.name)}</div></div>`;
+  const cats = loc.categories || [];
+  if (!cats.length) {
+    h += `<div class="empty"><div class="ei">🗂</div><p>Sin subcategorías en <strong>${esc(loc.name)}</strong>.<br>Pulsa <strong>＋</strong> para añadir (ej: CAJÓN 1).</p></div>`;
+  } else {
+    h += `<div class="card-list">`;
+    cats.forEach(cat => {
+      const n = cat.parts.length;
+      h += `<div class="card cat">
+        <div class="card-body" onclick="goCat('${cat.id}')">
+          <div class="card-ico">🗂</div>
+          <div class="card-info"><div class="card-name">${esc(cat.name)}</div><div class="card-meta">${n} repuesto${n !== 1 ? 's' : ''}</div></div>
+          <span style="color:var(--gray);font-size:20px;">›</span>
+        </div>
+        <div class="card-acts">
+          <button class="card-act edit" onclick="editCat('${cat.id}')">✏️ Editar</button>
+          <button class="card-act del" onclick="askDel('subcategoría','${esc(cat.name)}',()=>delCat('${cat.id}'))">🗑 Eliminar</button>
+        </div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+  el.innerHTML = h;
+}
+
+function renderParts(el, loc) {
+  let parts, cname;
+  if (loc.hasSubs) { const cat = getCat(loc, nav.catId); if (!cat) { goLoc(nav.locId); return; } parts = cat.parts; cname = cat.name; }
+  else { parts = loc.parts || []; cname = loc.name; }
+  let h = `<div class="lvl-hdr"><div class="lvl-ttl">🔧 ${esc(cname)}</div></div>`;
+  if (!parts.length) {
+    h += `<div class="empty"><div class="ei">🔧</div><p>Sin repuestos en <strong>${esc(cname)}</strong>.<br>Pulsa <strong>＋</strong> para añadir el primero.</p></div>`;
+  } else {
+    h += `<div class="card-list">`;
+    parts.forEach(p => {
+      h += `<div class="card prt" id="pcard-${p.id}">
+        <div class="card-body" style="cursor:default;">
+          <div class="card-ico">🔩</div>
+          <div class="card-info"><div class="card-name">${esc(p.name)}</div><div class="card-meta">${p.ref ? 'Ref: ' + esc(p.ref) : 'Sin referencia'}</div></div>
+          <div class="stk-badge${p.stock === 0 ? ' zero' : ''}" id="badge-${p.id}">${p.stock}</div>
+        </div>
+        <div class="stk-ctrl">
+          <button class="stk-btn minus" onclick="chgStk('${p.id}',-1)">−</button>
+          <div style="flex:1;text-align:center;">
+            <div style="font-size:11px;color:var(--gray);margin-bottom:2px;">UNIDADES</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;" id="sd-${p.id}">${p.stock}</div>
+          </div>
+          <button class="stk-btn" onclick="chgStk('${p.id}',1)">＋</button>
+        </div>
+        <div class="card-acts">
+          <button class="card-act edit" onclick="editPart('${p.id}')">✏️ Editar</button>
+          <button class="card-act del" onclick="askDel('repuesto','${esc(p.name)}',()=>delPart('${p.id}'))">🗑 Eliminar</button>
+        </div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+  el.innerHTML = h;
+}
+
+// ---- NAV ----
+window.goHome = () => { nav = { locId: null, catId: null }; render(); };
+window.goLoc = id => { nav = { locId: id, catId: null }; render(); };
+window.goCat = id => { nav.catId = id; render(); };
+
+function updateFab() {
+  const fab = document.getElementById('fab');
+  if (!nav.locId) { fab.className = 'fab'; return; }
+  const loc = getLoc(nav.locId);
+  fab.className = (loc && loc.hasSubs && !nav.catId) ? 'fab blue' : 'fab green';
+}
+
+// ---- STOCK ----
+window.chgStk = function(pid, delta) {
+  const parts = getParts(); if (!parts) return;
+  const p = parts.find(x => x.id === pid); if (!p) return;
+  p.stock = Math.max(0, p.stock + delta); save();
+  const b = document.getElementById('badge-' + pid), d = document.getElementById('sd-' + pid);
+  if (b) { b.textContent = p.stock; b.className = 'stk-badge' + (p.stock === 0 ? ' zero' : ''); }
+  if (d) d.textContent = p.stock;
+};
+
+// ---- MODAL ----
+window.openAdd = function() {
+  if (!nav.locId) { openAddLoc(); return; }
+  const loc = getLoc(nav.locId);
+  if (loc && loc.hasSubs && !nav.catId) openAddCat();
+  else openAddPart();
+};
+
+function openAddLoc() {
+  mmode = 'add-loc'; medit = null; subsOn = false;
+  document.getElementById('mttl').textContent = '📦 Nueva Ubicación';
+  document.getElementById('mform').innerHTML = `
+    <div class="fg"><label class="fl">Nombre de la ubicación</label>
+    <input class="fi" id="fn" placeholder="ej: CAJONERA FURGONETA" autocomplete="off"></div>
+    <div class="tgl-row" id="trow" onclick="togSubs()">
+      <div class="tgl-sw"></div>
+      <div><div class="tgl-lbl">¿Tiene subcategorías?</div>
+      <div class="tgl-sub" id="tdesc">No — los repuestos van directamente aquí</div></div>
+    </div>
+    <button class="btn" onclick="saveMo()">GUARDAR UBICACIÓN</button>`;
+  openMo();
+}
+window.togSubs = function() {
+  subsOn = !subsOn;
+  document.getElementById('trow').classList.toggle('on', subsOn);
+  document.getElementById('tdesc').textContent = subsOn ? 'Sí — tendrá cajones, estantes, etc.' : 'No — los repuestos van directamente aquí';
+};
+window.editLoc = function(id) {
+  const loc = getLoc(id); if (!loc) return;
+  mmode = 'edit-loc'; medit = id;
+  document.getElementById('mttl').textContent = '✏️ Editar Ubicación';
+  document.getElementById('mform').innerHTML = `
+    <div class="fg"><label class="fl">Nombre</label>
+    <input class="fi" id="fn" value="${esc(loc.name)}" autocomplete="off"></div>
+    <button class="btn" onclick="saveMo()">GUARDAR CAMBIOS</button>`;
+  openMo();
+};
+function openAddCat() {
+  mmode = 'add-cat'; medit = null;
+  document.getElementById('mttl').textContent = '🗂 Nueva Subcategoría';
+  document.getElementById('mform').innerHTML = `
+    <div class="fg"><label class="fl">Nombre</label>
+    <input class="fi" id="fn" placeholder="ej: CAJÓN 1" autocomplete="off"></div>
+    <button class="btn blue" onclick="saveMo()">GUARDAR</button>`;
+  openMo();
+}
+window.editCat = function(id) {
+  const loc = getLoc(nav.locId); const cat = getCat(loc, id); if (!cat) return;
+  mmode = 'edit-cat'; medit = id;
+  document.getElementById('mttl').textContent = '✏️ Editar Subcategoría';
+  document.getElementById('mform').innerHTML = `
+    <div class="fg"><label class="fl">Nombre</label>
+    <input class="fi" id="fn" value="${esc(cat.name)}" autocomplete="off"></div>
+    <button class="btn blue" onclick="saveMo()">GUARDAR CAMBIOS</button>`;
+  openMo();
+};
+function openAddPart() {
+  mmode = 'add-prt'; medit = null;
+  document.getElementById('mttl').textContent = '🔩 Nuevo Repuesto';
+  document.getElementById('mform').innerHTML = `
+    <div class="fg"><label class="fl">Nombre del repuesto</label>
+    <input class="fi" id="fn" placeholder="ej: Motor 24V DORMA" autocomplete="off"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Referencia (opcional)</label><input class="fi" id="fr" placeholder="ej: MT-24V" autocomplete="off"></div>
+      <div class="fg"><label class="fl">Unidades</label><input class="fi" id="fstk" type="number" min="0" value="1" style="text-align:center;font-weight:700;font-size:18px;"></div>
+    </div>
+    <button class="btn green" onclick="saveMo()">GUARDAR REPUESTO</button>`;
+  openMo();
+}
+window.editPart = function(id) {
+  const parts = getParts(); const p = parts && parts.find(x => x.id === id); if (!p) return;
+  mmode = 'edit-prt'; medit = id;
+  document.getElementById('mttl').textContent = '✏️ Editar Repuesto';
+  document.getElementById('mform').innerHTML = `
+    <div class="fg"><label class="fl">Nombre del repuesto</label>
+    <input class="fi" id="fn" value="${esc(p.name)}" autocomplete="off"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Referencia (opcional)</label><input class="fi" id="fr" value="${esc(p.ref || '')}" autocomplete="off"></div>
+      <div class="fg"><label class="fl">Unidades</label><input class="fi" id="fstk" type="number" min="0" value="${p.stock}" style="text-align:center;font-weight:700;font-size:18px;"></div>
+    </div>
+    <button class="btn green" onclick="saveMo()">GUARDAR CAMBIOS</button>`;
+  openMo();
+};
+function openMo() {
+  subsOn = false;
+  document.getElementById('mo').classList.add('open');
+  setTimeout(() => { const e = document.getElementById('fn'); if (e) e.focus(); }, 350);
+}
+window.closeMo = function(e) { if (e && e.target !== document.getElementById('mo')) return; document.getElementById('mo').classList.remove('open'); };
+
+window.saveMo = function() {
+  const name = (document.getElementById('fn')?.value || '').trim().toUpperCase();
+  if (!name) { toast('⚠️ El nombre no puede estar vacío'); return; }
+  if (mmode === 'add-loc') {
+    db.locations.push(subsOn ? { id: gid(), name, hasSubs: true, categories: [] } : { id: gid(), name, hasSubs: false, parts: [] });
+    toast('✅ Ubicación añadida');
+  } else if (mmode === 'edit-loc') {
+    const loc = getLoc(medit); if (loc) { loc.name = name; toast('✅ Ubicación actualizada'); }
+  } else if (mmode === 'add-cat') {
+    const loc = getLoc(nav.locId); if (loc) { loc.categories.push({ id: gid(), name, parts: [] }); toast('✅ Subcategoría añadida'); }
+  } else if (mmode === 'edit-cat') {
+    const loc = getLoc(nav.locId); const cat = getCat(loc, medit); if (cat) { cat.name = name; toast('✅ Subcategoría actualizada'); }
+  } else if (mmode === 'add-prt' || mmode === 'edit-prt') {
+    const ref2 = (document.getElementById('fr')?.value || '').trim().toUpperCase();
+    const stk = Math.max(0, parseInt(document.getElementById('fstk')?.value || '0') || 0);
+    const parts = getParts();
+    if (parts !== null) {
+      if (mmode === 'add-prt') { parts.push({ id: gid(), name, ref: ref2, stock: stk }); toast('✅ Repuesto añadido'); }
+      else { const p = parts.find(x => x.id === medit); if (p) { p.name = name; p.ref = ref2; p.stock = stk; toast('✅ Repuesto actualizado'); } }
+    }
+  }
+  save(); document.getElementById('mo').classList.remove('open'); render();
+};
+
+// ---- DELETE ----
+window.askDel = function(tipo, nombre, cb) {
+  delCb = cb;
+  document.getElementById('ctit').textContent = `¿Eliminar ${tipo}?`;
+  document.getElementById('cmsg').textContent = `Se eliminará "${nombre}" y todo su contenido. Esta acción no se puede deshacer.`;
+  document.getElementById('cov').classList.add('open');
+};
+window.closeCov = () => { document.getElementById('cov').classList.remove('open'); delCb = null; };
+window.doDelete = () => { if (delCb) { delCb(); save(); render(); toast('🗑 Eliminado'); } closeCov(); };
+window.delLoc = id => { db.locations = db.locations.filter(l => l.id !== id); if (nav.locId === id) goHome(); };
+window.delCat = id => {
+  const loc = getLoc(nav.locId); if (loc) loc.categories = loc.categories.filter(c => c.id !== id);
+  if (nav.catId === id) goLoc(nav.locId);
+};
+window.delPart = id => {
+  const loc = getLoc(nav.locId); if (!loc) return;
+  if (loc.hasSubs) { const cat = getCat(loc, nav.catId); if (cat) cat.parts = cat.parts.filter(p => p.id !== id); }
+  else loc.parts = (loc.parts || []).filter(p => p.id !== id);
+};
+
+// ---- SEARCH ----
+window.showSearch = function() {
+  document.getElementById('si').value = '';
+  document.getElementById('sres').innerHTML = '';
+  document.getElementById('so').classList.add('open');
+  const mb = document.getElementById('micbtn'); if (mb) mb.classList.remove('on');
+  setTimeout(() => document.getElementById('si').focus(), 350);
+};
+window.closeSo = function(e) { if (e && e.target !== document.getElementById('so')) return; stopVoice(); document.getElementById('so').classList.remove('open'); };
+
+window.toggleVoice = function() {
+  if (recog) { stopVoice(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('⚠️ Tu navegador no soporta voz'); return; }
+  recog = new SR(); recog.lang = 'es-ES'; recog.interimResults = false; recog.maxAlternatives = 1;
+  document.getElementById('micbtn').classList.add('on');
+  recog.onresult = e => { document.getElementById('si').value = e.results[0][0].transcript; doSearch(); stopVoice(); };
+  recog.onerror = () => stopVoice(); recog.onend = () => stopVoice();
+  recog.start();
+};
+function stopVoice() { if (recog) { try { recog.stop(); } catch(e) {} recog = null; } const b = document.getElementById('micbtn'); if (b) b.classList.remove('on'); }
+
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').trim();
+
+window.doSearch = function() {
+  const raw = document.getElementById('si').value.trim();
+  const el = document.getElementById('sres');
+  if (!raw) { el.innerHTML = ''; return; }
+  const pals = norm(raw).split(/\s+/).filter(p => p.length > 1);
+  if (!pals.length) { el.innerHTML = ''; return; }
+
+  const res = [];
+  db.locations.forEach(loc => {
+    if (loc.hasSubs) {
+      (loc.categories || []).forEach(cat => {
+        cat.parts.forEach(p => {
+          if (pals.every(w => norm(p.name + ' ' + (p.ref || '')).includes(w)))
+            res.push({ loc, cat, p });
+        });
+      });
+    } else {
+      (loc.parts || []).forEach(p => {
+        if (pals.every(w => norm(p.name + ' ' + (p.ref || '')).includes(w)))
+          res.push({ loc, cat: null, p });
+      });
+    }
+  });
+
+  let h = '';
+  if (!res.length) {
+    h = `<div class="sr nf">❌ No hay repuestos que coincidan con "<strong>${esc(raw)}</strong>".</div>`;
+  } else {
+    h += `<div style="font-size:12px;color:var(--gray);margin-bottom:8px;font-weight:600;">${res.length === 1 ? '1 repuesto encontrado' : res.length + ' repuestos encontrados'}</div>`;
+    res.forEach(r => {
+      const ubi = r.cat ? `${esc(r.loc.name)} › ${esc(r.cat.name)}` : esc(r.loc.name);
+      const cid = r.cat ? `'${r.cat.id}'` : 'null';
+      h += `<div class="sr" onclick="goResult('${r.loc.id}',${cid})">
+        <strong>🔩 ${esc(r.p.name)}</strong>
+        📍 ${ubi}<br>
+        📦 <strong>${r.p.stock} unidad${r.p.stock !== 1 ? 'es' : ''}</strong>${r.p.ref ? ' · Ref: ' + esc(r.p.ref) : ''}
+      </div>`;
+    });
+  }
+  h += `<button class="btn-ok" onclick="closeSoNow()">OK</button>`;
+  el.innerHTML = h;
+};
+
+window.closeSoNow = () => { stopVoice(); document.getElementById('so').classList.remove('open'); };
+window.goResult = (locId, catId) => { closeSoNow(); nav = { locId, catId }; render(); };
+
+</script>
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");</script>
+</body>
+</html>
